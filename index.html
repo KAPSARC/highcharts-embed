@@ -3,11 +3,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Plastic Waste to Ocean</title>
+<title>Waste Production Chart</title>
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <style>
 body { margin:0; font-family: Arial; }
-#container { height: 450px; }
+#container { height: 500px; }
 </style>
 </head>
 <body>
@@ -15,59 +15,110 @@ body { margin:0; font-family: Arial; }
 <div id="container"></div>
 
 <script>
-fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/share-of-global-plastic-waste-emitted-to-the-ocean-2019/records?limit=10')
+fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/waste_production_rate_per_individual_en_0/records?limit=200')
 .then(res => res.json())
 .then(data => {
 
-    console.log("API sample:", data.results[0]); // 🔍 keep this for debugging
+    console.log(data.results[0]); // 🔍 check structure
 
-    const categories = [];
-    const values = [];
+    // 👉 SELECT EXACT 3 VARIABLES (adjust if needed)
+    const selectedVariables = [];
+
+    const grouped = {};
 
     data.results.forEach(row => {
 
-        // Try all possible country fields
-        const country =
-            row.country ||
-            row.country_name ||
-            row.entity ||
-            row.ref_area;
+        const variable =
+            row.variable ||
+            row.indicator ||
+            row.category;
 
-        // Find the numeric value dynamically
+        const year = row.year;
         const value = Object.values(row).find(v => typeof v === 'number');
 
-        if (country && value !== undefined) {
-            categories.push(country);
-            values.push(value);
+        if (!variable || !year || value === undefined) return;
+
+        if (!grouped[variable]) {
+            grouped[variable] = {};
+        }
+
+        grouped[variable][year] = value;
+
+        // collect first 3 variables dynamically
+        if (!selectedVariables.includes(variable) && selectedVariables.length < 3) {
+            selectedVariables.push(variable);
         }
     });
 
-    console.log("Parsed:", categories, values); // 🔍 check results
+    // Get sorted list of years
+    const years = [...new Set(data.results.map(r => r.year))].sort();
+
+    // Build series like Highcharts example
+    const series = selectedVariables.map(name => ({
+        name: name,
+        data: years.map(y => grouped[name]?.[y] ?? null)
+    }));
 
     Highcharts.chart('container', {
-        chart: { type: 'column' },
-        accessibility: { enabled: false },
 
         title: {
-            text: 'Plastic Waste Emitted to Ocean (2019)'
+            text: 'Waste Production Growth',
+            align: 'left'
         },
 
-        xAxis: {
-            categories: categories
+        subtitle: {
+            text: 'Source: KAPSARC',
+            align: 'left'
         },
 
         yAxis: {
-            title: { text: 'Share (%)' }
+            title: {
+                text: 'Value'
+            }
         },
 
-        series: [{
-            name: 'Share',
-            data: values
-        }]
+        xAxis: {
+            categories: years,
+            accessibility: {
+                rangeDescription: 'Range: ' + years[0] + ' to ' + years[years.length - 1]
+            }
+        },
+
+        legend: {
+            layout: 'vertical',
+            align: 'right',
+            verticalAlign: 'middle'
+        },
+
+        plotOptions: {
+            series: {
+                label: {
+                    connectorAllowed: false
+                }
+            }
+        },
+
+        series: series,
+
+        responsive: {
+            rules: [{
+                condition: {
+                    maxWidth: 500
+                },
+                chartOptions: {
+                    legend: {
+                        layout: 'horizontal',
+                        align: 'center',
+                        verticalAlign: 'bottom'
+                    }
+                }
+            }]
+        }
+
     });
 
 })
-.catch(err => console.error("API ERROR:", err));
+.catch(err => console.error('API error:', err));
 </script>
 
 </body>
