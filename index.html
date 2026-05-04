@@ -21,7 +21,7 @@
 
 
 <script>
-fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/share-of-global-plastic-waste-emitted-to-the-ocean-2019/records/?limit=10')
+fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/share-of-global-plastic-waste-emitted-to-the-ocean-2019/records/?limit=10&order_by=share%20desc&select=country,share')
   .then(response => response.json())
   .then(apiData => {
 
