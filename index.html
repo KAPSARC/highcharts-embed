@@ -21,7 +21,7 @@
 
 
 <script>
-fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/share-of-global-plastic-waste-emitted-to-the-ocean-2019/records/?limit=10&order_by=share%20desc&select=country,share')
+fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/share-of-global-plastic-waste-emitted-to-the-ocean-2019/records/?limit=10')
   .then(response => response.json())
   .then(apiData => {
 
@@ -29,27 +29,22 @@ fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/share-of
     const values = [];
 
     apiData.results.forEach(item => {
-        // ⚠️ Adjust these field names based on actual API response
-        categories.push(item.country);
-        values.push(item.share);
+        categories.push(item.country_name); // FIXED
+        values.push(item.value);            // FIXED
     });
 
     Highcharts.chart('container', {
         chart: { type: 'column' },
-        title: { text: 'Plastic waste emitted to ocean (Top 10)' },
-        xAxis: {
-            categories: categories
-        },
-        yAxis: {
-            title: { text: 'Share (%)' }
-        },
+        title: { text: 'Plastic waste to ocean' },
+        xAxis: { categories: categories },
         series: [{
             name: 'Share',
             data: values
         }]
     });
 
-  });
+  })
+  .catch(err => console.error('API error:', err));
 </script>
 
 
