@@ -1,125 +1,109 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Waste Production Chart</title>
-<script src="https://code.highcharts.com/highcharts.js"></script>
-<style>
-body { margin:0; font-family: Arial; }
-#container { height: 500px; }
-</style>
+    <meta charset="UTF-8">
+    <title>Waste Production Chart</title>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <style>
+        #container {
+            width: 100%;
+            height: 400px;
+        }
+    </style>
 </head>
 <body>
 
-<div id="container"></div>
+    <div id="container"></div>
 
-<script>
-fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/waste_production_rate_per_individual_en_0/records?limit=200')
-.then(res => res.json())
-.then(data => {
+    <script>
+        // API Endpoint for the specific dataset
+        const API_URL = 'https://datasource.kapsarc.org/api/records/1.0/search/?dataset=waste_production_rate_per_individual_en_0&rows=100';
 
-    console.log(data.results[0]); // 🔍 check structure
+        async function updateChart() {
+            try {
+                const response = await fetch(API_URL);
+                const json = await response.json();
+                const records = json.records;
 
-    // 👉 SELECT EXACT 3 VARIABLES (adjust if needed)
-    const selectedVariables = [];
+                // 1. Process data: Group by 'variable' and sort by 'year'
+                const seriesData = {};
 
-    const grouped = {};
-
-    data.results.forEach(row => {
-
-        const variable =
-            row.variable ||
-            row.indicator ||
-            row.category;
-
-        const year = row.year;
-        const value = Object.values(row).find(v => typeof v === 'number');
-
-        if (!variable || !year || value === undefined) return;
-
-        if (!grouped[variable]) {
-            grouped[variable] = {};
-        }
-
-        grouped[variable][year] = value;
-
-        // collect first 3 variables dynamically
-        if (!selectedVariables.includes(variable) && selectedVariables.length < 3) {
-            selectedVariables.push(variable);
-        }
-    });
-
-    // Get sorted list of years
-    const years = [...new Set(data.results.map(r => r.year))].sort();
-
-    // Build series like Highcharts example
-    const series = selectedVariables.map(name => ({
-        name: name,
-        data: years.map(y => grouped[name]?.[y] ?? null)
-    }));
-
-    Highcharts.chart('container', {
-
-        title: {
-            text: 'Waste Production Growth',
-            align: 'left'
-        },
-
-        subtitle: {
-            text: 'Source: KAPSARC',
-            align: 'left'
-        },
-
-        yAxis: {
-            title: {
-                text: 'Value'
-            }
-        },
-
-        xAxis: {
-            categories: years,
-            accessibility: {
-                rangeDescription: 'Range: ' + years[0] + ' to ' + years[years.length - 1]
-            }
-        },
-
-        legend: {
-            layout: 'vertical',
-            align: 'right',
-            verticalAlign: 'middle'
-        },
-
-        plotOptions: {
-            series: {
-                label: {
-                    connectorAllowed: false
-                }
-            }
-        },
-
-        series: series,
-
-        responsive: {
-            rules: [{
-                condition: {
-                    maxWidth: 500
-                },
-                chartOptions: {
-                    legend: {
-                        layout: 'horizontal',
-                        align: 'center',
-                        verticalAlign: 'bottom'
+                records.forEach(record => {
+                    const { year, value, variable } = record.fields;
+                    
+                    if (!seriesData[variable]) {
+                        seriesData[variable] = [];
                     }
-                }
-            }]
+                    
+                    // Push [x, y] pairs. Use parseInt for year to ensure numerical x-axis
+                    seriesData[variable].push([parseInt(year), value]);
+                });
+
+                // 2. Convert the grouped data into Highcharts series format
+                const finalSeries = Object.keys(seriesData).map(name => {
+                    return {
+                        name: name,
+                        data: seriesData[name].sort((a, b) => a[0] - b[0]) // Sort by year
+                    };
+                });
+
+                // 3. Initialize or update the chart
+                Highcharts.chart('container', {
+                    chart: {
+                        type: 'line'
+                    },
+                    title: {
+                        text: 'Waste Production Rate Per Individual',
+                        align: 'left'
+                    },
+                    subtitle: {
+                        text: 'Source: <a href="https://datasource.kapsarc.org/" target="_blank">KAPSARC Data Portal</a>',
+                        align: 'left'
+                    },
+                    xAxis: {
+                        title: { text: 'Year' },
+                        tickInterval: 1
+                    },
+                    yAxis: {
+                        title: { text: 'Value' }
+                    },
+                    legend: {
+                        layout: 'vertical',
+                        align: 'right',
+                        verticalAlign: 'middle'
+                    },
+                    plotOptions: {
+                        series: {
+                            label: { connectorAllowed: false }
+                        }
+                    },
+                    series: finalSeries,
+                    responsive: {
+                        rules: [{
+                            condition: { maxWidth: 500 },
+                            chartOptions: {
+                                legend: {
+                                    layout: 'horizontal',
+                                    align: 'center',
+                                    verticalAlign: 'bottom'
+                                }
+                            }
+                        }]
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
         }
 
-    });
+        // Initial load
+        updateChart();
 
-})
-.catch(err => console.error('API error:', err));
-</script>
-
+        // Refresh data every 10 minutes (600,000 ms) to keep it updated
+        setInterval(updateChart, 600000);
+    </script>
 </body>
 </html>
