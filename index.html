@@ -2,38 +2,39 @@
 
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Plastic Waste to Ocean</title>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        #container {
-            width: 100%;
-            height: 450px;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Plastic Waste to Ocean</title>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<style>
+body { margin:0; font-family: Arial; }
+#container { height: 450px; }
+</style>
 </head>
 <body>
 
 <div id="container"></div>
 
 <script>
-fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/share-of-global-plastic-waste-emitted-to-the-ocean-2019/records/?limit=10')
-  .then(response => response.json())
-  .then(apiData => {
+fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/share-of-global-plastic-waste-emitted-to-the-ocean-2019/records?limit=10')
+.then(res => res.json())
+.then(data => {
+
+    console.log("API sample:", data.results[0]); // 🔍 keep this for debugging
 
     const categories = [];
     const values = [];
 
-    // 🔍 Robust parsing (handles field variations safely)
-    apiData.results.forEach(item => {
-        const country = item.country || item.country_name || item.ref_area;
+    data.results.forEach(row => {
 
-        // find numeric field automatically
-        const value = Object.values(item).find(v => typeof v === 'number');
+        // Try all possible country fields
+        const country =
+            row.country ||
+            row.country_name ||
+            row.entity ||
+            row.ref_area;
+
+        // Find the numeric value dynamically
+        const value = Object.values(row).find(v => typeof v === 'number');
 
         if (country && value !== undefined) {
             categories.push(country);
@@ -41,24 +42,22 @@ fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/share-of
         }
     });
 
+    console.log("Parsed:", categories, values); // 🔍 check results
+
     Highcharts.chart('container', {
         chart: { type: 'column' },
+        accessibility: { enabled: false },
 
-        accessibility: { enabled: false }, // remove warning
-
-        title: { text: 'Top 10 Plastic Waste to Ocean (2019)' },
+        title: {
+            text: 'Plastic Waste Emitted to Ocean (2019)'
+        },
 
         xAxis: {
-            categories: categories,
-            title: { text: 'Country' }
+            categories: categories
         },
 
         yAxis: {
             title: { text: 'Share (%)' }
-        },
-
-        tooltip: {
-            pointFormat: '<b>{point.y:.2f}%</b>'
         },
 
         series: [{
@@ -67,8 +66,8 @@ fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/share-of
         }]
     });
 
-  })
-  .catch(err => console.error('API error:', err));
+})
+.catch(err => console.error("API ERROR:", err));
 </script>
 
 </body>
