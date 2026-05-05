@@ -15,11 +15,9 @@ body { margin:0; font-family: Arial; }
 <div id="container"></div>
 
 <script>
-fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/methane-intensity-satellite-observed-vs-reported-emissions/records?limit=10')
+fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/methane-intensity-satellite-observed-vs-reported-emissions/records/?lang=en&limit=10&offset=0')
 .then(res => res.json())
 .then(data => {
-
-    //console.log(data.results[0]); // 🔍 verify fields once
 
     const categories = [];
     const satellite = [];
@@ -27,22 +25,10 @@ fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/methane-
     const edgar = [];
 
     data.results.forEach(row => {
-
-        const country =
-            row.country ||
-            row.country_name ||
-            row.entity;
-
-        const sat = row.satellite_2019_2023_average;
-        const ieaVal = row.iea_2024;
-        const edgarVal = row.edgar_2024;
-
-        if (country) {
-            categories.push(country);
-            satellite.push(sat);
-            iea.push(ieaVal);
-            edgar.push(edgarVal);
-        }
+        categories.push(row.country);
+        satellite.push(row.satellite_2019_2023_average);
+        iea.push(row.iea_2024);
+        edgar.push(row.edgar_2024);
     });
 
     Highcharts.chart('container', {
@@ -57,7 +43,7 @@ fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/methane-
         },
 
         subtitle: {
-            text: 'Satellite vs IEA vs EDGAR (2024)'
+            text: 'Satellite vs IEA vs EDGAR'
         },
 
         xAxis: {
@@ -73,7 +59,8 @@ fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/methane-
         },
 
         tooltip: {
-            shared: true
+            shared: true,
+            valueDecimals: 3
         },
 
         plotOptions: {
@@ -102,6 +89,7 @@ fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/methane-
 })
 .catch(err => console.error('API error:', err));
 </script>
+
 
 </body>
 </html>
