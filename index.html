@@ -15,11 +15,11 @@ body { margin:0; font-family: Arial; }
 <div id="container"></div>
 
 <script>
-fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/methane_intensity_satellite_observed_vs_reported_emissions/records?limit=10')
+fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/methane-intensity-satellite-observed-vs-reported-emissions/records/?lang=en&limit=10&offset=0')
 .then(res => res.json())
 .then(data => {
 
-    console.log(data.results[0]); // 🔍 verify fields once
+    //console.log(data.results[0]); // 🔍 verify fields once
 
     const categories = [];
     const satellite = [];
