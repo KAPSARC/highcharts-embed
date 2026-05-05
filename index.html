@@ -17,102 +17,141 @@
 
     <div id="container"></div>
 
-   <script>
-    const API_URL = 'https://datasource.kapsarc.org/explore/assets/methane-intensity-satellite-observed-vs-reported-emissions/api/';
+  <script src="https://code.highcharts.com/modules/dumbbell.js"></script>
 
-    async function updateChart() {
-        try {
-            const response = await fetch(API_URL);
-            const json = await response.json();
+<script>
+const API_URL = 'https://datasource.kapsarc.org/explore/assets/methane-intensity-satellite-observed-vs-reported-emissions/api/';
 
-            // Adjust depending on API structure
-            const records = json.results || json.records || [];
+async function updateChart() {
+    try {
+        const response = await fetch(API_URL);
+        const json = await response.json();
 
-            const countries = [];
-            const satellite = [];
-            const iea = [];
-            const edgar = [];
+        const records = json.results || json.records || [];
 
-            records.forEach(r => {
-                const f = r.fields || r;
+        const dumbbellData = [];
+        const edgarData = [];
 
-                const country = f.country || f.name;
+        records.forEach((r, index) => {
+            const f = r.fields || r;
 
-                if (!country) return;
+            const country = f.country || f.name;
+            if (!country) return;
 
-                countries.push(country);
+            const satellite = f.satellite_2019_2023_average;
+            const iea = f.iea_2024;
+            const edgar = f.edgar_2024;
 
-                satellite.push(f.satellite_2019_2023_average || null);
-                iea.push(f.iea_2024 || null);
-                edgar.push(f.edgar_2024 || null);
+            dumbbellData.push({
+                name: country,
+                low: satellite,
+                high: iea,
+                edgar: edgar,
+                color: '#7cb5ec', // connector color
+                lowColor: '#2b908f',   // Satellite
+                highColor: '#f45b5b'   // IEA
             });
 
-            Highcharts.chart('container', {
-                chart: {
-                    type: 'scatter'
-                },
+            edgarData.push({
+                x: index,
+                y: edgar,
+                name: country
+            });
+        });
 
+        Highcharts.chart('container', {
+
+            chart: {
+                type: 'dumbbell',
+                inverted: true
+            },
+
+            title: {
+                text: 'Methane Intensity Comparison'
+            },
+
+            subtitle: {
+                text: 'Satellite vs IEA vs EDGAR'
+            },
+
+            xAxis: {
+                type: 'category'
+            },
+
+            yAxis: {
                 title: {
-                    text: 'Methane Intensity Comparison'
-                },
+                    text: 'Methane Intensity'
+                }
+            },
 
-                subtitle: {
-                    text: 'Satellite vs IEA vs EDGAR'
-                },
+            tooltip: {
+                formatter: function () {
+                    if (this.point.low !== undefined) {
+                        return `<b>${this.point.name}</b><br/>
+                                Satellite: ${this.point.low}<br/>
+                                IEA: ${this.point.high}<br/>
+                                EDGAR: ${this.point.edgar}`;
+                    }
+                    return false;
+                }
+            },
 
-                xAxis: {
-                    categories: countries,
-                    title: { text: 'Country' }
-                },
-
-                yAxis: {
-                    title: { text: 'Methane Intensity' }
-                },
-
-                tooltip: {
-                    shared: true,
-                    formatter: function () {
-                        return `<b>${this.x}</b><br/>
-                            Satellite: ${satellite[this.point.index]}<br/>
-                            IEA: ${iea[this.point.index]}<br/>
-                            EDGAR: ${edgar[this.point.index]}`;
+            plotOptions: {
+                series: {
+                    dataSorting: {
+                        enabled: true,
+                        sortKey: 'low'
                     }
                 },
-
-                plotOptions: {
-                    scatter: {
-                        marker: {
-                            radius: 5
+                dumbbell: {
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function () {
+                            return this.point.low + ' / ' + this.point.high;
+                        },
+                        style: {
+                            fontSize: '10px'
                         }
                     }
+                }
+            },
+
+            series: [
+                {
+                    name: 'Satellite vs IEA',
+                    data: dumbbellData
                 },
-
-                series: [
-                    {
-                        name: 'Satellite (2019–2023 avg)',
-                        data: satellite.map((y, i) => [i, y])
+                {
+                    type: 'scatter',
+                    name: 'EDGAR 2024',
+                    data: edgarData,
+                    color: '#90ed7d',
+                    marker: {
+                        symbol: 'circle',
+                        radius: 6
                     },
-                    {
-                        name: 'IEA 2024',
-                        data: iea.map((y, i) => [i, y])
-                    },
-                    {
-                        name: 'EDGAR 2024',
-                        data: edgar.map((y, i) => [i, y])
+                    dataLabels: {
+                        enabled: true,
+                        format: '{y}',
+                        style: {
+                            fontSize: '10px'
+                        }
                     }
-                ]
-            });
+                }
+            ]
+        });
 
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        }
+    } catch (error) {
+        console.error('Error fetching data:', error);
     }
+}
 
-    // initial load
-    updateChart();
+// initial load
+updateChart();
 
-    // refresh every 10 minutes
-    setInterval(updateChart, 600000);
+// auto refresh
+setInterval(updateChart, 600000);
 </script>
+
 </body>
 </html>
