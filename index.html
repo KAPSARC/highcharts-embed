@@ -3,104 +3,41 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Methane Intensity Comparison</title>
-<script src="https://code.highcharts.com/highcharts.js"></script>
-<style>
-body { margin:0; font-family: Arial; }
-#container { height: 450px; }
-</style>
-</head>
-<body>
-
-<div id="container"></div>
-
+<title>Plastic Waste to Ocean</title>
 <script>
-fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/methane-intensity-satellite-observed-vs-reported-emissions/records/?lang=en&limit=10&offset=0')
+fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/share-of-global-plastic-waste-emitted-to-the-ocean-2019/records?limit=10')
 .then(res => res.json())
 .then(data => {
 
-    //console.log(data.results[0]); // 🔍 verify fields once
+    console.log(data.results[0]); // 👈 ADD IT HERE
 
     const categories = [];
-    const satellite = [];
-    const iea = [];
-    const edgar = [];
+    const values = [];
 
     data.results.forEach(row => {
-
         const country =
             row.country ||
             row.country_name ||
-            row.entity;
+            row.entity ||
+            row.ref_area;
 
-        const sat = row.satellite_2019_2023_average;
-        const ieaVal = row.iea_2024;
-        const edgarVal = row.edgar_2024;
+        const value = Object.values(row).find(v => typeof v === 'number');
 
-        if (country) {
+        if (country && value !== undefined) {
             categories.push(country);
-            satellite.push(sat ?? null);
-            iea.push(ieaVal ?? null);
-            edgar.push(edgarVal ?? null);
+            values.push(value);
         }
     });
 
     Highcharts.chart('container', {
-        chart: {
-            type: 'column'
-        },
-
+        chart: { type: 'column' },
         accessibility: { enabled: false },
-
-        title: {
-            text: 'Methane Intensity Comparison'
-        },
-
-        subtitle: {
-            text: 'Satellite vs IEA vs EDGAR (2024)'
-        },
-
-        xAxis: {
-            categories: categories,
-            crosshair: true
-        },
-
-        yAxis: {
-            min: 0,
-            title: {
-                text: 'Methane Intensity'
-            }
-        },
-
-        tooltip: {
-            shared: true
-        },
-
-        plotOptions: {
-            column: {
-                pointPadding: 0.2,
-                borderWidth: 0
-            }
-        },
-
-        series: [
-            {
-                name: 'Satellite (2019–2023 Avg)',
-                data: satellite
-            },
-            {
-                name: 'IEA 2024',
-                data: iea
-            },
-            {
-                name: 'EDGAR 2024',
-                data: edgar
-            }
-        ]
+        title: { text: 'Plastic Waste Emitted to Ocean (2019)' },
+        xAxis: { categories: categories },
+        series: [{ name: 'Share', data: values }]
     });
 
-})
-.catch(err => console.error('API error:', err));
+});
 </script>
 
 </body>
