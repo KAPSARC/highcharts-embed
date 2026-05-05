@@ -1,9 +1,21 @@
+
+
+
 <!DOCTYPE html>
 
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Plastic Waste to Ocean</title>
+<title>Methane Intensity Comparison</title>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<style>
+body { margin:0; font-family: Arial; }
+#container { height: 450px; }
+</style>
+</head>
+<body>
+
+<div id="container"></div>
 <script>
 fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/share-of-global-plastic-waste-emitted-to-the-ocean-2019/records?limit=10')
 .then(res => res.json())
