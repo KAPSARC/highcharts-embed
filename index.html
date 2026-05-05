@@ -17,7 +17,16 @@ body { margin:0; font-family: Arial; }
 <script>
 fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/methane-intensity-satellite-observed-vs-reported-emissions/records/?lang=en&limit=10&offset=0')
 .then(res => res.json())
+
+// 👇 THIS is where you put it
 .then(data => {
+
+    console.log('FULL RESPONSE:', data); // 🔍 debug
+
+    if (!data.results) {
+        console.error('Bad API response:', data);
+        return;
+    }
 
     const categories = [];
     const satellite = [];
@@ -89,7 +98,6 @@ fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/methane-
 })
 .catch(err => console.error('API error:', err));
 </script>
-
 
 </body>
 </html>
