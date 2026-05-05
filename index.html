@@ -2,161 +2,52 @@
 
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Methane Intensity Chart</title>
-
-```
+<meta charset="UTF-8">
+<title>Plastic Waste to Ocean</title>
 <script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://code.highcharts.com/modules/dumbbell.js"></script>
-
 <style>
-    #container {
-        width: 100%;
-        height: 600px;
-    }
+body { margin:0; font-family: Arial; }
+#container { height: 450px; }
 </style>
-```
-
 </head>
-
 <body>
 
 <div id="container"></div>
 
 <script>
-const RAW_API = 'https://datasource.kapsarc.org/explore/assets/methane-intensity-satellite-observed-vs-reported-emissions/api/';
+fetch('https://datasource.kapsarc.org/api/explore/v2.1/catalog/datasets/share-of-global-plastic-waste-emitted-to-the-ocean-2019/records?limit=10')
+.then(res => res.json())
+.then(data => {
 
-// CORS proxy
-const API_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(RAW_API);
+    console.log(data.results[0]); // 👈 ADD IT HERE
 
-async function updateChart() {
-    try {
-        const response = await fetch(API_URL);
-        const json = await response.json();
+    const categories = [];
+    const values = [];
 
-        const records = json.results || json.records || [];
+    data.results.forEach(row => {
+        const country =
+            row.country ||
+            row.country_name ||
+            row.entity ||
+            row.ref_area;
 
-        const dumbbellData = [];
-        const edgarData = [];
+        const value = Object.values(row).find(v => typeof v === 'number');
 
-        records.forEach((r, index) => {
-            const f = r.fields || r;
+        if (country && value !== undefined) {
+            categories.push(country);
+            values.push(value);
+        }
+    });
 
-            const country = f.country || f.name;
-            if (!country) return;
+    Highcharts.chart('container', {
+        chart: { type: 'column' },
+        accessibility: { enabled: false },
+        title: { text: 'Plastic Waste Emitted to Ocean (2019)' },
+        xAxis: { categories: categories },
+        series: [{ name: 'Share', data: values }]
+    });
 
-            const satellite = f.satellite_2019_2023_average;
-            const iea = f.iea_2024;
-            const edgar = f.edgar_2024;
-
-            dumbbellData.push({
-                name: country,
-                low: satellite,
-                high: iea,
-                edgar: edgar,
-                color: '#7cb5ec',
-                lowColor: '#2b908f',   // Satellite
-                highColor: '#f45b5b'   // IEA
-            });
-
-            edgarData.push({
-                x: index,
-                y: edgar,
-                name: country
-            });
-        });
-
-        Highcharts.chart('container', {
-            chart: {
-                type: 'dumbbell',
-                inverted: true
-            },
-
-            title: {
-                text: 'Methane Intensity Comparison by Country'
-            },
-
-            subtitle: {
-                text: 'Satellite (2019–2023 avg) vs IEA 2024 vs EDGAR 2024'
-            },
-
-            xAxis: {
-                type: 'category'
-            },
-
-            yAxis: {
-                title: {
-                    text: 'Methane Intensity'
-                }
-            },
-
-            tooltip: {
-                formatter: function () {
-                    if (this.point.low !== undefined) {
-                        return `<b>${this.point.name}</b><br/>
-                                🟢 Satellite: ${this.point.low}<br/>
-                                🔴 IEA: ${this.point.high}<br/>
-                                🟡 EDGAR: ${this.point.edgar}`;
-                    }
-                    return `<b>${this.point.name}</b><br/>EDGAR: ${this.y}`;
-                }
-            },
-
-            plotOptions: {
-                series: {
-                    dataSorting: {
-                        enabled: true,
-                        sortKey: 'low'
-                    }
-                },
-                dumbbell: {
-                    dataLabels: {
-                        enabled: true,
-                        formatter: function () {
-                            return this.point.low + ' / ' + this.point.high;
-                        },
-                        style: {
-                            fontSize: '10px'
-                        }
-                    }
-                }
-            },
-
-            series: [
-                {
-                    name: 'Satellite vs IEA',
-                    data: dumbbellData
-                },
-                {
-                    type: 'scatter',
-                    name: 'EDGAR 2024',
-                    data: edgarData,
-                    color: '#90ed7d',
-                    marker: {
-                        symbol: 'circle',
-                        radius: 6
-                    },
-                    dataLabels: {
-                        enabled: true,
-                        format: '{y}',
-                        style: {
-                            fontSize: '10px'
-                        }
-                    }
-                }
-            ]
-        });
-
-    } catch (error) {
-        console.error('Error fetching data:', error);
-    }
-}
-
-// initial load
-updateChart();
-
-// refresh every 10 minutes
-setInterval(updateChart, 600000);
+});
 </script>
 
 </body>
