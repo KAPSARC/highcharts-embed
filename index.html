@@ -1,26 +1,33 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Waste Production Chart</title>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/exporting.js"></script>
-    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
-    <style>
-        #container {
-            width: 100%;
-            height: 400px;
-        }
-    </style>
+    <title>Methane Intensity Chart</title>
+
+```
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/dumbbell.js"></script>
+
+<style>
+    #container {
+        width: 100%;
+        height: 600px;
+    }
+</style>
+```
+
 </head>
+
 <body>
 
-    <div id="container"></div>
-
-  <script src="https://code.highcharts.com/modules/dumbbell.js"></script>
+<div id="container"></div>
 
 <script>
-const API_URL = 'https://datasource.kapsarc.org/explore/assets/methane-intensity-satellite-observed-vs-reported-emissions/api/';
+const RAW_API = 'https://datasource.kapsarc.org/explore/assets/methane-intensity-satellite-observed-vs-reported-emissions/api/';
+
+// CORS proxy
+const API_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(RAW_API);
 
 async function updateChart() {
     try {
@@ -47,7 +54,7 @@ async function updateChart() {
                 low: satellite,
                 high: iea,
                 edgar: edgar,
-                color: '#7cb5ec', // connector color
+                color: '#7cb5ec',
                 lowColor: '#2b908f',   // Satellite
                 highColor: '#f45b5b'   // IEA
             });
@@ -60,18 +67,17 @@ async function updateChart() {
         });
 
         Highcharts.chart('container', {
-
             chart: {
                 type: 'dumbbell',
                 inverted: true
             },
 
             title: {
-                text: 'Methane Intensity Comparison'
+                text: 'Methane Intensity Comparison by Country'
             },
 
             subtitle: {
-                text: 'Satellite vs IEA vs EDGAR'
+                text: 'Satellite (2019–2023 avg) vs IEA 2024 vs EDGAR 2024'
             },
 
             xAxis: {
@@ -88,11 +94,11 @@ async function updateChart() {
                 formatter: function () {
                     if (this.point.low !== undefined) {
                         return `<b>${this.point.name}</b><br/>
-                                Satellite: ${this.point.low}<br/>
-                                IEA: ${this.point.high}<br/>
-                                EDGAR: ${this.point.edgar}`;
+                                🟢 Satellite: ${this.point.low}<br/>
+                                🔴 IEA: ${this.point.high}<br/>
+                                🟡 EDGAR: ${this.point.edgar}`;
                     }
-                    return false;
+                    return `<b>${this.point.name}</b><br/>EDGAR: ${this.y}`;
                 }
             },
 
@@ -149,7 +155,7 @@ async function updateChart() {
 // initial load
 updateChart();
 
-// auto refresh
+// refresh every 10 minutes
 setInterval(updateChart, 600000);
 </script>
 
